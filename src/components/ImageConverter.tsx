@@ -305,7 +305,7 @@ const ImageConverter: React.FC = () => {
         </div>
 
         {/* Processing Indicator */}
-        {isProcessing && (
+        {(isProcessing || isProcessingUrl) && (
           <div className="text-center mb-8">
             <div className={`inline-flex items-center px-4 py-2 rounded-full ${
               isDarkMode 
@@ -313,7 +313,7 @@ const ImageConverter: React.FC = () => {
                 : 'bg-blue-100 text-blue-800'
             }`}>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-              Converting images...
+              {isProcessingUrl ? 'Converting image from URL...' : 'Converting images...'}
             </div>
           </div>
         )}
