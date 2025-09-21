@@ -114,51 +114,6 @@ const ImageConverter: React.FC = () => {
       }
     });
   }, [quality]);
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = img.width;
-        canvas.height = img.height;
-        
-        ctx?.drawImage(img, 0, 0);
-        
-        canvas.toBlob((blob) => {
-          if (blob) {
-            // Create a fake file object for consistency
-            const fileName = url.split('/').pop()?.split('?')[0] || 'image';
-            const fileExtension = fileName.includes('.') ? fileName.split('.').pop() : 'jpg';
-            const originalSize = blob.size; // We'll estimate this
-            
-            canvas.toBlob((webpBlob) => {
-              if (webpBlob) {
-                const convertedImage: ConvertedImage = {
-                  id: Math.random().toString(36).substr(2, 9),
-                  originalFile: new File([blob], `${fileName.split('.')[0]}.${fileExtension}`, { type: blob.type }),
-                  originalSize: originalSize,
-                  convertedBlob: webpBlob,
-                  convertedSize: webpBlob.size,
-                  compressionRatio: Math.round((1 - webpBlob.size / originalSize) * 100),
-                  preview: URL.createObjectURL(webpBlob)
-                };
-                resolve(convertedImage);
-              } else {
-                reject(new Error('Failed to convert image to WebP'));
-              }
-            }, 'image/webp', quality);
-          } else {
-            reject(new Error('Failed to load image from URL'));
-          }
-        }, 'image/jpeg', 1.0);
-      };
-      
-      img.onerror = () => reject(new Error('Failed to load image from URL. Please check the URL and try again.'));
-      img.src = url;
-    });
-  }, [quality]);
 
   const handleFiles = useCallback(async (files: FileList) => {
     setIsProcessing(true);
@@ -251,6 +206,7 @@ const ImageConverter: React.FC = () => {
       setIsProcessingUrl(false);
     }
   }, [imageUrl, convertImageFromUrl]);
+  
   const totalSavings = images.reduce((acc, img) => acc + (img.originalSize - img.convertedSize), 0);
 
   return (
