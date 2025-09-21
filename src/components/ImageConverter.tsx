@@ -59,7 +59,61 @@ const ImageConverter: React.FC = () => {
   }, [quality]);
 
   const convertImageFromUrl = useCallback(async (url: string): Promise<ConvertedImage> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // First, fetch the image to get the actual file size
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to fetch image from URL');
+        }
+        
+        const actualFileSize = parseInt(response.headers.get('content-length') || '0');
+        const imageBlob = await response.blob();
+        const actualOriginalSize = actualFileSize > 0 ? actualFileSize : imageBlob.size;
+        
+        // Create image element for canvas conversion
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          canvas.width = img.width;
+          canvas.height = img.height;
+          
+          ctx?.drawImage(img, 0, 0);
+          
+          canvas.toBlob((webpBlob) => {
+            if (webpBlob) {
+              // Create a fake file object for consistency
+              const fileName = url.split('/').pop()?.split('?')[0] || 'image';
+              const fileExtension = fileName.includes('.') ? fileName.split('.').pop() : 'jpg';
+              
+              const convertedImage: ConvertedImage = {
+                id: Math.random().toString(36).substr(2, 9),
+                originalFile: new File([imageBlob], `${fileName.split('.')[0]}.${fileExtension}`, { type: imageBlob.type }),
+                originalSize: actualOriginalSize,
+                convertedBlob: webpBlob,
+                convertedSize: webpBlob.size,
+                compressionRatio: Math.round((1 - webpBlob.size / actualOriginalSize) * 100),
+                preview: URL.createObjectURL(webpBlob)
+              };
+              resolve(convertedImage);
+            } else {
+              reject(new Error('Failed to convert image to WebP'));
+            }
+          }, 'image/webp', quality);
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image from URL. Please check the URL and try again.'));
+        img.src = URL.createObjectURL(imageBlob);
+        
+      } catch (error) {
+        reject(new Error('Failed to fetch image from URL. Please check the URL and try again.'));
+      }
+    });
+  }, [quality]);
       const img = new Image();
       img.crossOrigin = 'anonymous';
       
