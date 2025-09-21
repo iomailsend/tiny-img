@@ -182,6 +182,21 @@ const ImageConverter: React.FC = () => {
     setImages([]);
   }, [images]);
 
+  const handleUrlConvert = useCallback(async () => {
+    if (!imageUrl.trim()) return;
+    
+    setIsProcessingUrl(true);
+    try {
+      const convertedImage = await convertImageFromUrl(imageUrl.trim());
+      setImages(prev => [...prev, convertedImage]);
+      setImageUrl('');
+    } catch (error) {
+      console.error('Error converting image from URL:', error);
+      alert(error instanceof Error ? error.message : 'Failed to convert image from URL. Please check the URL and try again.');
+    } finally {
+      setIsProcessingUrl(false);
+    }
+  }, [imageUrl, convertImageFromUrl]);
   const totalSavings = images.reduce((acc, img) => acc + (img.originalSize - img.convertedSize), 0);
 
   return (
@@ -304,6 +319,52 @@ const ImageConverter: React.FC = () => {
           </div>
         </div>
 
+        {/* URL Input Section */}
+        <div className="mb-8 max-w-2xl mx-auto">
+          <div className={`rounded-xl p-6 shadow-lg transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
+          }`}>
+            <div className="text-center mb-4">
+              <h3 className={`text-lg font-semibold ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>Or convert from URL</h3>
+              <p className={`text-sm ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>Paste a direct link to any image</p>
+            </div>
+            <div className="flex gap-3">
+              <input
+                type="url"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && imageUrl.trim() && !isProcessingUrl) {
+                    handleUrlConvert();
+                  }
+                }}
+                placeholder="https://example.com/image.jpg"
+                className={`flex-1 px-4 py-3 rounded-lg border transition-colors ${
+                  isDarkMode
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                disabled={isProcessingUrl}
+              />
+              <button
+                onClick={handleUrlConvert}
+                disabled={!imageUrl.trim() || isProcessingUrl}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessingUrl ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                ) : (
+                  <Zap className="w-4 h-4 mr-2" />
+                )}
+                Convert
+              </button>
+            </div>
+          </div>
+        </div>
         {/* Processing Indicator */}
         {(isProcessing || isProcessingUrl) && (
           <div className="text-center mb-8">
